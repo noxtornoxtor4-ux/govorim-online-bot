@@ -43,6 +43,19 @@ function readWebAppConfig() {
   return { url, token: Bun.env.SHEETS_WEBAPP_TOKEN?.trim() ?? "" };
 }
 
+/** First day of the course; without it the bot cannot number lessons. */
+function readCourseStart(): Date | null {
+  const raw = Bun.env.COURSE_START?.trim();
+  if (!raw) return null;
+
+  const parsed = new Date(`${raw}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error(`Invalid COURSE_START: ${raw}. Expected YYYY-MM-DD, e.g. 2026-09-07`);
+  }
+
+  return parsed;
+}
+
 function readLessonTime(): { hour: number; minute: number } {
   const raw = optional("LESSON_TIME", "20:00");
   const match = /^(\d{1,2}):(\d{2})$/.exec(raw);
@@ -65,8 +78,9 @@ export const config = {
   adminCode: Bun.env.ADMIN_CODE?.trim() || null,
   timezone: optional("TIMEZONE", "Asia/Bishkek"),
   lessonTime: readLessonTime(),
+  courseStart: readCourseStart(),
   /** Lesson days as cron weekdays: Mon, Wed, Fri. */
-  lessonDays: [1, 3, 5],
+  lessonDays: [1, 3, 5] as readonly number[],
 } as const;
 
 export const lessonTimeLabel = `${String(config.lessonTime.hour).padStart(2, "0")}:${String(

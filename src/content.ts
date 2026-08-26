@@ -1,4 +1,5 @@
-import { lessonTimeLabel } from "./config";
+import { config, lessonTimeLabel } from "./config";
+import { describeLessonType, type Lesson, TOTAL_LESSONS } from "./services/lessons";
 
 export const TOTAL_STEPS = 4;
 
@@ -48,3 +49,37 @@ export const REMINDER = [
 ].join("\n");
 
 export const FALLBACK = "Не понял. Записаться — /join, расписание — /schedule, все команды — /help";
+
+function formatLessonDate(at: Date): string {
+  return at.toLocaleString("ru-RU", {
+    timeZone: config.timezone,
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+/** Describes the upcoming lesson, as far as the configuration allows. */
+function describeNextLesson(lesson: Lesson | null): string[] {
+  if (!lesson) return [];
+
+  const lines = ["", `<b>Ближайшее занятие</b>`, formatLessonDate(lesson.at)];
+
+  if (lesson.number !== null && lesson.type !== null) {
+    lines.push(`Занятие ${lesson.number} из ${TOTAL_LESSONS} · ${describeLessonType(lesson.type)}`);
+  }
+
+  return lines;
+}
+
+export function scheduleMessage(lesson: Lesson | null): string {
+  return [SCHEDULE, ...describeNextLesson(lesson)].join("\n");
+}
+
+export function reminderMessage(lesson: Lesson | null): string {
+  const type = lesson?.type != null ? ["", `Сегодня: <b>${describeLessonType(lesson.type)}</b>`] : [];
+
+  return [REMINDER, ...type].join("\n");
+}

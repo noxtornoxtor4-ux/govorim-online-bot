@@ -2,8 +2,9 @@ import { Cron } from "croner";
 import { type Bot, GrammyError } from "grammy";
 
 import { config } from "../config";
-import { REMINDER } from "../content";
+import { reminderMessage } from "../content";
 import type { BotContext } from "../context";
+import { nextLesson } from "./lessons";
 import { getSubscribers, removeSubscriber } from "./storage";
 
 /** Telegram tolerates roughly 30 messages per second for broadcasts. */
@@ -32,6 +33,8 @@ async function broadcast(bot: Bot<BotContext>): Promise<void> {
   const chatIds = getSubscribers();
   if (chatIds.length === 0) return;
 
+  const text = reminderMessage(nextLesson());
+
   let delivered = 0;
 
   for (let offset = 0; offset < chatIds.length; offset += BATCH_SIZE) {
@@ -40,7 +43,7 @@ async function broadcast(bot: Bot<BotContext>): Promise<void> {
     const results = await Promise.all(
       batch.map(async (chatId) => {
         try {
-          await bot.api.sendMessage(chatId, REMINDER);
+          await bot.api.sendMessage(chatId, text);
           return true;
         } catch (error) {
           // 403 means the user blocked the bot — stop reminding them.
