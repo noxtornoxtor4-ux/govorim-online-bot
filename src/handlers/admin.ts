@@ -3,7 +3,7 @@ import { Composer, InputFile } from "grammy";
 import { config } from "../config";
 import type { BotContext } from "../context";
 import { buildCsv } from "../services/csv";
-import { getSubscribers, readApplications } from "../services/storage";
+import { countAdmins, getSubscribers, grantAdmin, isAdmin, readApplications } from "../services/storage";
 
 /** How many of the newest applications one /applications message shows. */
 const PAGE_SIZE = 10;
@@ -33,7 +33,31 @@ admin.command("id", (ctx) =>
   ),
 );
 
-const adminOnly = admin.filter((ctx) => ctx.from !== undefined && config.adminIds.includes(ctx.from.id));
+/** Turns the sender into an admin when they know the code from ADMIN_CODE. */
+admin.command("admin", async (ctx) => {
+  const supplied = ctx.match.trim();
+
+  if (!config.adminCode || !supplied || supplied !== config.adminCode) {
+    // Silence keeps outsiders from discovering that the command exists.
+    return;
+  }
+
+  const granted = ctx.from ? await grantAdmin(ctx.from.id) : false;
+
+  await ctx.reply(
+    granted
+      ? [
+          "✅ Готово, теперь ты администратор.",
+          "",
+          "/applications — заявки",
+          "/export — выгрузка файлом",
+          "/stats — статистика",
+        ].join("\n")
+      : "Ты уже администратор. /applications, /export, /stats",
+  );
+});
+
+const adminOnly = admin.filter((ctx) => ctx.from !== undefined && isAdmin(ctx.from.id));
 
 adminOnly.command("applications", async (ctx) => {
   const applications = await readApplications();
@@ -71,6 +95,7 @@ adminOnly.command("stats", async (ctx) => {
       "",
       `Заявок: ${applications.length}`,
       `Подписано на напоминания: ${getSubscribers().length}`,
+      `Администраторов: ${countAdmins()}`,
     ].join("\n"),
   );
 });

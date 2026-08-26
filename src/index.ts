@@ -3,13 +3,21 @@ import { config } from "./config";
 import { startHealthServer } from "./health";
 import { scheduleReminders } from "./services/reminders";
 import { ensureHeaderRow, isSheetsEnabled } from "./services/sheets";
-import { loadSubscribers } from "./services/storage";
+import { loadAdmins, loadSubscribers } from "./services/storage";
+import { isWebAppEnabled } from "./services/webapp";
 
 await loadSubscribers();
+await loadAdmins();
 
 if (isSheetsEnabled) {
   await ensureHeaderRow();
-} else {
+}
+
+if (isWebAppEnabled) {
+  console.log("Applications are also sent to the Google Sheet web app.");
+}
+
+if (!isSheetsEnabled && !isWebAppEnabled) {
   console.log(
     `Google Sheets is off. Applications are stored in ${config.dataDir}/applications.jsonl ` +
       "and available through /applications and /export.",

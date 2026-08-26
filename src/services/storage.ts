@@ -13,6 +13,8 @@ const applicationsPath = `${config.dataDir}/applications.jsonl`;
 let subscribers = new Set<number>();
 
 export async function loadSubscribers(): Promise<void> {
+  subscribers = new Set();
+
   const stored = file(subscribersPath);
   if (!(await stored.exists())) return;
 
@@ -70,4 +72,43 @@ export async function readApplications(): Promise<Application[]> {
       return [];
     }
   });
+}
+
+const adminsPath = `${config.dataDir}/admins.json`;
+
+/** Admins added at runtime with /admin <код>, on top of the ones from ADMIN_IDS. */
+let grantedAdmins = new Set<number>();
+
+export async function loadAdmins(): Promise<void> {
+  grantedAdmins = new Set();
+
+  const stored = file(adminsPath);
+  if (!(await stored.exists())) return;
+
+  try {
+    const ids: unknown = await stored.json();
+    if (Array.isArray(ids)) {
+      grantedAdmins = new Set(ids.filter((id): id is number => typeof id === "number"));
+    }
+  } catch (error) {
+    console.error("Could not read the admins file, keeping only ADMIN_IDS:", error);
+  }
+}
+
+export function isAdmin(telegramId: number): boolean {
+  return config.adminIds.includes(telegramId) || grantedAdmins.has(telegramId);
+}
+
+/** Returns false when the person was already an admin. */
+export async function grantAdmin(telegramId: number): Promise<boolean> {
+  if (isAdmin(telegramId)) return false;
+
+  grantedAdmins.add(telegramId);
+  await write(adminsPath, JSON.stringify([...grantedAdmins], null, 2));
+
+  return true;
+}
+
+export function countAdmins(): number {
+  return new Set([...config.adminIds, ...grantedAdmins]).size;
 }

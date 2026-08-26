@@ -35,6 +35,14 @@ function readAdminIds(): number[] {
     .filter((id) => Number.isInteger(id) && id > 0);
 }
 
+/** Google Apps Script web app that appends applications to a Google Sheet. */
+function readWebAppConfig() {
+  const url = Bun.env.SHEETS_WEBAPP_URL?.trim();
+  if (!url) return null;
+
+  return { url, token: Bun.env.SHEETS_WEBAPP_TOKEN?.trim() ?? "" };
+}
+
 function readLessonTime(): { hour: number; minute: number } {
   const raw = optional("LESSON_TIME", "20:00");
   const match = /^(\d{1,2}):(\d{2})$/.exec(raw);
@@ -51,8 +59,10 @@ function readLessonTime(): { hour: number; minute: number } {
 export const config = {
   botToken: required("BOT_TOKEN"),
   sheets: readSheetsConfig(),
+  sheetsWebApp: readWebAppConfig(),
   dataDir: optional("DATA_DIR", "./data"),
   adminIds: readAdminIds(),
+  adminCode: Bun.env.ADMIN_CODE?.trim() || null,
   timezone: optional("TIMEZONE", "Asia/Bishkek"),
   lessonTime: readLessonTime(),
   /** Lesson days as cron weekdays: Mon, Wed, Fri. */

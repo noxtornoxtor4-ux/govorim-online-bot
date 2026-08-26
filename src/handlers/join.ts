@@ -6,6 +6,7 @@ import { initialSession } from "../context";
 import { CONTACT, MENU, REMOVE_KEYBOARD } from "../keyboards";
 import { appendApplication, isSheetsEnabled } from "../services/sheets";
 import { recordApplication } from "../services/storage";
+import { isWebAppEnabled, postApplication } from "../services/webapp";
 import type { Application } from "../types";
 import { validateAge, validateContact, validateLocation, validateName } from "../validation";
 
@@ -156,14 +157,23 @@ async function finish(ctx: BotContext, raw: string): Promise<void> {
 }
 
 async function save(application: Application): Promise<void> {
-  // The local log is the source for /applications and the safety net if Sheets fails.
+  // The local log is the source for /applications and the safety net if a sync fails.
   await recordApplication(application);
 
-  if (!isSheetsEnabled) return;
+  // Both spreadsheet routes are optional; a failure of either must not lose the application.
+  if (isWebAppEnabled) {
+    try {
+      await postApplication(application);
+    } catch (error) {
+      console.error("Could not send the application to the Google Sheet:", error);
+    }
+  }
 
-  try {
-    await appendApplication(application);
-  } catch (error) {
-    console.error("Could not append the application to Google Sheets:", error);
+  if (isSheetsEnabled) {
+    try {
+      await appendApplication(application);
+    } catch (error) {
+      console.error("Could not append the application to Google Sheets:", error);
+    }
   }
 }
