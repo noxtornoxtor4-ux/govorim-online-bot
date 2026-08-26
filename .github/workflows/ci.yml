@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    env:
+      # Конфиг требует токен при загрузке; для тестов достаточно заглушки.
+      BOT_TOKEN: test-token
+      DATA_DIR: ./data-ci
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install --frozen-lockfile
+
+      - name: Линтер и форматирование
+        run: bun run lint
+
+      - name: Проверка типов
+        run: bun run typecheck
+
+      - name: Тесты
+        run: bun test
