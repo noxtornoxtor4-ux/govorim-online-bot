@@ -2,7 +2,7 @@ import { Composer } from "grammy";
 
 import { step } from "../content";
 import type { BotContext } from "../context";
-import { initialSession } from "../context";
+import { acknowledge, initialSession } from "../context";
 import { CONTACT, MENU, REMOVE_KEYBOARD } from "../keyboards";
 import { appendApplication, isSheetsEnabled } from "../services/sheets";
 import { recordApplication } from "../services/storage";
@@ -31,7 +31,7 @@ async function startJoin(ctx: BotContext): Promise<void> {
 join.command("join", startJoin);
 
 join.callbackQuery("join", async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await acknowledge(ctx);
   await startJoin(ctx);
 });
 

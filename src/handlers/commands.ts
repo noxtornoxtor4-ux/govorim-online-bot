@@ -2,6 +2,7 @@ import { Composer } from "grammy";
 
 import { FALLBACK, HELP, SCHEDULE, WELCOME } from "../content";
 import type { BotContext } from "../context";
+import { acknowledge } from "../context";
 import { MENU } from "../keyboards";
 
 export const commands = new Composer<BotContext>();
@@ -11,7 +12,7 @@ commands.command("help", (ctx) => ctx.reply(HELP));
 commands.command("schedule", (ctx) => ctx.reply(SCHEDULE));
 
 commands.callbackQuery("schedule", async (ctx) => {
-  await ctx.answerCallbackQuery();
+  await acknowledge(ctx);
   await ctx.reply(SCHEDULE);
 });
 
