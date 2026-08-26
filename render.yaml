@@ -3,14 +3,13 @@ services:
     name: govorim-online-bot
     runtime: docker
     dockerfilePath: ./Dockerfile
+    plan: free
     healthCheckPath: /
-    disk:
-      name: data
-      mountPath: /data
-      sizeGB: 1
     envVars:
+      # На бесплатном тарифе Render нет постоянного диска: состояние живёт
+      # во временной папке, а переживает перезапуск копия в Google Таблице.
       - key: DATA_DIR
-        value: /data
+        value: /tmp/data
       - key: TIMEZONE
         value: Asia/Bishkek
       - key: LESSON_TIME
@@ -18,9 +17,11 @@ services:
       # Задаются вручную в панели Render, в репозиторий не попадают
       - key: BOT_TOKEN
         sync: false
-      - key: GOOGLE_SHEET_ID
+      - key: ADMIN_CODE
         sync: false
-      - key: GOOGLE_SERVICE_ACCOUNT_EMAIL
+      - key: COURSE_START
         sync: false
-      - key: GOOGLE_PRIVATE_KEY
+      - key: SHEETS_WEBAPP_URL
+        sync: false
+      - key: SHEETS_WEBAPP_TOKEN
         sync: false

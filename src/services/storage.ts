@@ -2,6 +2,7 @@ import { file, write } from "bun";
 
 import { config } from "../config";
 import type { Application } from "../types";
+import { loadRemoteState, saveRemoteState } from "./remote-state";
 
 const subscribersPath = `${config.dataDir}/subscribers.json`;
 const applicationsPath = `${config.dataDir}/applications.jsonl`;
@@ -37,12 +38,14 @@ export async function addSubscriber(chatId: number): Promise<void> {
 
   subscribers.add(chatId);
   await persistSubscribers();
+  scheduleRemotePush();
 }
 
 export async function removeSubscriber(chatId: number): Promise<void> {
   if (!subscribers.delete(chatId)) return;
 
   await persistSubscribers();
+  scheduleRemotePush();
 }
 
 export function getSubscribers(): number[] {
@@ -105,10 +108,59 @@ export async function grantAdmin(telegramId: number): Promise<boolean> {
 
   grantedAdmins.add(telegramId);
   await write(adminsPath, JSON.stringify([...grantedAdmins], null, 2));
+  scheduleRemotePush();
 
   return true;
 }
 
 export function countAdmins(): number {
   return new Set([...config.adminIds, ...grantedAdmins]).size;
+}
+
+/**
+ * Pushes the current lists to the Google Sheet. Coalesced, because a burst of
+ * messages would otherwise cause a burst of requests.
+ */
+let pendingPush: ReturnType<typeof setTimeout> | null = null;
+
+const PUSH_DELAY_MS = 2000;
+
+function scheduleRemotePush(): void {
+  if (!config.sheetsWebApp || pendingPush) return;
+
+  pendingPush = setTimeout(() => {
+    pendingPush = null;
+
+    saveRemoteState({ subscribers: [...subscribers], admins: [...grantedAdmins] }).catch((error) => {
+      console.error("Could not mirror the state to the Google Sheet:", error);
+    });
+  }, PUSH_DELAY_MS);
+}
+
+/**
+ * Restores the lists from the Google Sheet after a redeploy wiped the disk.
+ * Remote entries are merged in, never used to delete local ones.
+ */
+export async function restoreFromRemote(): Promise<void> {
+  if (!config.sheetsWebApp) return;
+
+  try {
+    const state = await loadRemoteState();
+    if (!state) return;
+
+    const before = subscribers.size + grantedAdmins.size;
+
+    for (const id of state.subscribers) subscribers.add(id);
+    for (const id of state.admins) grantedAdmins.add(id);
+
+    const restored = subscribers.size + grantedAdmins.size - before;
+
+    if (restored > 0) {
+      await persistSubscribers();
+      await write(adminsPath, JSON.stringify([...grantedAdmins], null, 2));
+      console.log(`Restored ${restored} entries from the Google Sheet.`);
+    }
+  } catch (error) {
+    console.error("Could not read the state from the Google Sheet:", error);
+  }
 }

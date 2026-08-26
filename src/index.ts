@@ -3,11 +3,13 @@ import { config } from "./config";
 import { startHealthServer } from "./health";
 import { scheduleReminders } from "./services/reminders";
 import { ensureHeaderRow, isSheetsEnabled } from "./services/sheets";
-import { loadAdmins, loadSubscribers } from "./services/storage";
+import { loadAdmins, loadSubscribers, restoreFromRemote } from "./services/storage";
 import { isWebAppEnabled } from "./services/webapp";
 
 await loadSubscribers();
 await loadAdmins();
+// A host without a persistent disk starts empty; the sheet holds the surviving copy.
+await restoreFromRemote();
 
 if (isSheetsEnabled) {
   await ensureHeaderRow();
