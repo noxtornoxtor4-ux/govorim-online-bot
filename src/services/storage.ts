@@ -52,7 +52,7 @@ export async function recordApplication(application: Application): Promise<void>
   const existing = file(applicationsPath);
   const previous = (await existing.exists()) ? await existing.text() : "";
 
-  await write(applicationsPath, previous + JSON.stringify(application) + "\n");
+  await write(applicationsPath, `${previous}${JSON.stringify(application)}\n`);
 }
 
 export async function readApplications(): Promise<Application[]> {

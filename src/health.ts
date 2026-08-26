@@ -13,8 +13,7 @@ export function startHealthServer(): HealthServer | null {
 
   const server = Bun.serve({
     port,
-    fetch: () =>
-      Response.json({ status: "ok", startedAt, uptimeSeconds: Math.round(process.uptime()) }),
+    fetch: () => Response.json({ status: "ok", startedAt, uptimeSeconds: Math.round(process.uptime()) }),
   });
 
   console.log(`Health server listening on port ${server.port}`);

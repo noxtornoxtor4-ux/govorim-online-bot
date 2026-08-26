@@ -7,6 +7,7 @@ import { admin } from "./handlers/admin";
 import { commands } from "./handlers/commands";
 import { join } from "./handlers/join";
 import { subscribe } from "./handlers/subscribe";
+import { createSessionStorage } from "./services/session-storage";
 
 export const bot = new Bot<BotContext>(config.botToken);
 
@@ -23,7 +24,7 @@ const htmlByDefault: Transformer = (prev, method, payload, signal) => {
 
 bot.api.config.use(htmlByDefault);
 
-bot.use(session({ initial: initialSession }));
+bot.use(session({ initial: initialSession, storage: createSessionStorage() }));
 bot.use(subscribe);
 bot.use(admin);
 bot.use(join);

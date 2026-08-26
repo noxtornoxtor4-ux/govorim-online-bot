@@ -78,6 +78,9 @@ bun run dev
 | `bun run start` | Обычный запуск |
 | `bun test` | Тесты |
 | `bun run typecheck` | Проверка типов |
+| `bun run lint` | Линтер и проверка форматирования |
+| `bun run format` | Исправить форматирование и импорты |
+| `bun run check` | Всё сразу — запускать перед коммитом |
 
 ## Структура
 
@@ -89,6 +92,7 @@ src/
   content.ts               — все тексты сообщений
   context.ts               — тип контекста и данные сессии
   types.ts                 — модель заявки
+  validation.ts            — проверка ответов формы, покрыта тестами
   health.ts                — health-эндпоинт для хостинга
   keyboards.ts             — кнопки меню и запроса контакта
   handlers/
@@ -98,7 +102,8 @@ src/
     admin.ts               — /applications и /stats для администраторов
   services/
     sheets.ts              — запись заявки в Google Sheets
-    storage.ts             — подписчики и резервные копии заявок
+    storage.ts             — подписчики и журнал заявок
+    session-storage.ts     — незаконченные формы переживают перезапуск
     reminders.ts           — напоминания по расписанию
     csv.ts                 — выгрузка заявок в CSV
 ```

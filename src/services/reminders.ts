@@ -1,5 +1,5 @@
 import { Cron } from "croner";
-import { GrammyError, type Bot } from "grammy";
+import { type Bot, GrammyError } from "grammy";
 
 import { config } from "../config";
 import { REMINDER } from "../content";

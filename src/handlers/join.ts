@@ -7,12 +7,7 @@ import { CONTACT, MENU, REMOVE_KEYBOARD } from "../keyboards";
 import { appendApplication, isSheetsEnabled } from "../services/sheets";
 import { recordApplication } from "../services/storage";
 import type { Application } from "../types";
-
-const MIN_AGE = 3;
-const MAX_AGE = 25;
-
-const PHONE_PATTERN = /^\+?[\d\s()-]{7,20}$/;
-const USERNAME_PATTERN = /^@[A-Za-z0-9_]{4,32}$/;
+import { validateAge, validateContact, validateLocation, validateName } from "../validation";
 
 /** Answers are echoed back inside HTML messages, so they must be escaped. */
 function escapeHtml(value: string): string {
@@ -61,7 +56,7 @@ join.on("message:text", async (ctx, next) => {
   // Other commands must reach their own handlers even mid-form.
   if (current === "idle" || ctx.message.text.startsWith("/")) return next();
 
-  const answer = ctx.message.text.trim();
+  const answer = ctx.message.text;
 
   switch (current) {
     case "name":
@@ -75,37 +70,40 @@ join.on("message:text", async (ctx, next) => {
   }
 });
 
-async function askAge(ctx: BotContext, name: string): Promise<void> {
-  if (name.length < 2 || name.length > 64) {
-    await ctx.reply("Кажется, это не имя. Напиши имя ученика — от 2 до 64 символов.");
+async function askAge(ctx: BotContext, raw: string): Promise<void> {
+  const name = validateName(raw);
+  if (!name.ok) {
+    await ctx.reply(name.error);
     return;
   }
 
-  ctx.session.draft.name = name;
+  ctx.session.draft.name = name.value;
   ctx.session.step = "age";
   await ctx.reply(`${step(2)}\nСколько ученику лет?`);
 }
 
 async function askLocation(ctx: BotContext, raw: string): Promise<void> {
-  const age = Number.parseInt(raw, 10);
-
-  if (Number.isNaN(age) || age < MIN_AGE || age > MAX_AGE) {
-    await ctx.reply(`Напиши возраст числом, от ${MIN_AGE} до ${MAX_AGE}. Например: 10`);
+  const age = validateAge(raw);
+  if (!age.ok) {
+    await ctx.reply(age.error);
     return;
   }
 
-  ctx.session.draft.age = age;
+  ctx.session.draft.age = age.value;
   ctx.session.step = "location";
-  await ctx.reply(`${step(3)}\nИз какой страны и населённого пункта ученик?\nНапример: Кыргызстан, село Кой-Таш`);
+  await ctx.reply(
+    `${step(3)}\nИз какой страны и населённого пункта ученик?\nНапример: Кыргызстан, село Кой-Таш`,
+  );
 }
 
-async function askContact(ctx: BotContext, location: string): Promise<void> {
-  if (location.length < 2 || location.length > 128) {
-    await ctx.reply("Напиши страну и населённый пункт. Например: Казахстан, Алматы");
+async function askContact(ctx: BotContext, raw: string): Promise<void> {
+  const location = validateLocation(raw);
+  if (!location.ok) {
+    await ctx.reply(location.error);
     return;
   }
 
-  ctx.session.draft.location = location;
+  ctx.session.draft.location = location.value;
   ctx.session.step = "contact";
   await ctx.reply(
     `${step(4)}\nКонтакт для связи: номер телефона или @username.\nМожно просто нажать кнопку ниже.`,
@@ -113,9 +111,10 @@ async function askContact(ctx: BotContext, location: string): Promise<void> {
   );
 }
 
-async function finish(ctx: BotContext, contact: string): Promise<void> {
-  if (!PHONE_PATTERN.test(contact) && !USERNAME_PATTERN.test(contact)) {
-    await ctx.reply("Не похоже на контакт. Пришли номер телефона или @username — либо нажми кнопку ниже.");
+async function finish(ctx: BotContext, raw: string): Promise<void> {
+  const contact = validateContact(raw);
+  if (!contact.ok) {
+    await ctx.reply(contact.error);
     return;
   }
 
@@ -132,7 +131,7 @@ async function finish(ctx: BotContext, contact: string): Promise<void> {
     name,
     age,
     location,
-    contact,
+    contact: contact.value,
     telegramId: from.id,
     telegramUsername: from.username ? `@${from.username}` : "",
     submittedAt: new Date().toISOString(),

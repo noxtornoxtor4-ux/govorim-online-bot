@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
-
-import { buildCsv } from "./csv";
 import type { Application } from "../types";
+import { buildCsv } from "./csv";
 
 const application: Application = {
   name: 'Айпери "Ай"',

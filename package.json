@@ -4,6 +4,7 @@
   "type": "module",
   "private": true,
   "devDependencies": {
+    "@biomejs/biome": "^2.5.10",
     "@types/bun": "latest"
   },
   "peerDependencies": {
@@ -17,6 +18,10 @@
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src",
+    "format": "biome check --write src",
+    "check": "bun run lint && bun run typecheck && bun test"
   }
 }

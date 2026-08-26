@@ -2,8 +2,8 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { rm } from "node:fs/promises";
 
 import { config } from "../config";
-import { readApplications, recordApplication } from "./storage";
 import type { Application } from "../types";
+import { readApplications, recordApplication } from "./storage";
 
 const sample = (name: string): Application => ({
   name,
