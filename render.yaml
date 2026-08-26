@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: govorim-online-bot
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: DATA_DIR
+        value: /data
+      - key: TIMEZONE
+        value: Asia/Bishkek
+      - key: LESSON_TIME
+        value: "20:00"
+      # Задаются вручную в панели Render, в репозиторий не попадают
+      - key: BOT_TOKEN
+        sync: false
+      - key: GOOGLE_SHEET_ID
+        sync: false
+      - key: GOOGLE_SERVICE_ACCOUNT_EMAIL
+        sync: false
+      - key: GOOGLE_PRIVATE_KEY
+        sync: false
