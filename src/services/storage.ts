@@ -2,6 +2,7 @@ import { file, write } from "bun";
 
 import { config } from "../config";
 import type { Application } from "../types";
+import { describeError } from "./http";
 import { loadRemoteState, saveRemoteState } from "./remote-state";
 
 const subscribersPath = `${config.dataDir}/subscribers.json`;
@@ -132,7 +133,7 @@ function scheduleRemotePush(): void {
     pendingPush = null;
 
     saveRemoteState({ subscribers: [...subscribers], admins: [...grantedAdmins] }).catch((error) => {
-      console.error("Could not mirror the state to the Google Sheet:", error);
+      console.error(`Could not mirror the state to the Google Sheet: ${describeError(error)}`);
     });
   }, PUSH_DELAY_MS);
 }
@@ -161,6 +162,6 @@ export async function restoreFromRemote(): Promise<void> {
       console.log(`Restored ${restored} entries from the Google Sheet.`);
     }
   } catch (error) {
-    console.error("Could not read the state from the Google Sheet:", error);
+    console.error(`Could not read the state from the Google Sheet: ${describeError(error)}`);
   }
 }

@@ -4,6 +4,7 @@ import { step } from "../content";
 import type { BotContext } from "../context";
 import { acknowledge, initialSession } from "../context";
 import { CONTACT, MENU, REMOVE_KEYBOARD } from "../keyboards";
+import { describeError } from "../services/http";
 import { appendApplication, isSheetsEnabled } from "../services/sheets";
 import { recordApplication } from "../services/storage";
 import { isWebAppEnabled, postApplication } from "../services/webapp";
@@ -165,7 +166,7 @@ async function save(application: Application): Promise<void> {
     try {
       await postApplication(application);
     } catch (error) {
-      console.error("Could not send the application to the Google Sheet:", error);
+      console.error(`Could not send the application to the Google Sheet: ${describeError(error)}`);
     }
   }
 

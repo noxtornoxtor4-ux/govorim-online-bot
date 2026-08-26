@@ -9,11 +9,6 @@ jobs:
   check:
     runs-on: ubuntu-latest
 
-    env:
-      # Конфиг требует токен при загрузке; для тестов достаточно заглушки.
-      BOT_TOKEN: test-token
-      DATA_DIR: ./data-ci
-
     steps:
       - uses: actions/checkout@v4
 
@@ -27,7 +22,11 @@ jobs:
         run: bun run lint
 
       - name: Проверка типов
+        env:
+          # Конфиг требует токен уже при загрузке модуля.
+          BOT_TOKEN: test-token
         run: bun run typecheck
 
       - name: Тесты
-        run: bun test
+        # Значения берутся из .env.test — тесты не касаются настоящих сервисов.
+        run: bun run test

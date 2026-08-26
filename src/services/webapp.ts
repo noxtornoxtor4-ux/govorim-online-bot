@@ -1,5 +1,6 @@
 import { config } from "../config";
 import type { Application } from "../types";
+import { requestWebApp } from "./http";
 
 /**
  * Sends the application to a Google Apps Script web app, which appends it as a row
@@ -7,20 +8,13 @@ import type { Application } from "../types";
  */
 export const isWebAppEnabled = config.sheetsWebApp !== null;
 
-const TIMEOUT_MS = 10_000;
-
 export async function postApplication(application: Application): Promise<void> {
   const webApp = config.sheetsWebApp;
   if (!webApp) return;
 
-  const response = await fetch(webApp.url, {
+  await requestWebApp(webApp.url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ...application, token: webApp.token }),
-    signal: AbortSignal.timeout(TIMEOUT_MS),
   });
-
-  if (!response.ok) {
-    throw new Error(`Web app answered ${response.status}: ${await response.text()}`);
-  }
 }
